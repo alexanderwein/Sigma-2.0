@@ -1,0 +1,256 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SIGMA 2.0 | Crypto Intelligence</title>
+<style>
+:root{color-scheme:dark;--bg:#080e19;--panel:#111c2d;--line:#24364d;--muted:#91a4bd;--blue:#57b8ff;--green:#32d49b;--red:#ff637c;--gold:#e8c66b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#e9f1fc;font:14px Inter,Arial,sans-serif}
+header{padding:20px 4%;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.brand{font-size:23px;font-weight:800;letter-spacing:2px}
+.brand span{color:var(--blue)}
+small,.muted{color:var(--muted)}
+main{max-width:1500px;margin:auto;padding:22px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+select,input,button{background:#17263b;color:#e9f1fc;border:1px solid var(--line);border-radius:7px;padding:10px}
+button{cursor:pointer}
+button:hover{border-color:var(--blue)}
+.primary{background:#1465a6;border:0}
+.status{color:var(--green);font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.metric{font-size:23px;font-weight:700;margin-top:9px;overflow-wrap:anywhere}
+.label{font-size:12px;color:var(--muted)}
+.layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,1fr);gap:14px;margin-top:15px}
+.panel h3{margin:0 0 15px;font-size:14px}
+canvas{width:100%;height:300px;display:block}
+#indicators{height:155px}
+table{border-collapse:collapse;width:100%;font-size:12px}
+td,th{text-align:left;padding:10px 7px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:500}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:#1a2a40}
+.positive{color:var(--green)}.negative{color:var(--red)}
+.signal{padding:12px;border-radius:8px;background:#17263b;margin-top:10px}
+.pill{border:1px solid var(--line);padding:4px 7px;border-radius:20px;font-size:11px}
+.forecast{display:flex;justify-content:space-between;gap:8px;margin:12px 0}
+.forecast div{flex:1;background:#17263b;padding:10px;border-radius:8px}
+footer{padding:24px;color:var(--muted);font-size:11px;line-height:1.7}
+@media(max-width:850px){.grid{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}main{padding:12px}}
+@media(max-width:420px){.metric{font-size:18px}}
+</style>
+</head>
+<body>
+<header>
+ <div class="brand">SIGMA <span>2.0</span></div>
+ <div><span class="status" id="status">● CONNECTING</span><br><small>CRYPTO INTELLIGENCE TERMINAL</small></div>
+</header>
+<main>
+ <div class="toolbar">
+  <select id="asset"><option>Loading markets...</option></select>
+  <select id="interval">
+   <option value="1h">1 hour</option><option value="4h">4 hours</option>
+   <option value="1d" selected>1 day</option><option value="1w">1 week</option>
+  </select>
+  <button class="primary" id="refresh">↻ Refresh data</button>
+  <span class="pill" id="updated">Waiting for data</span>
+ </div>
+ <div class="grid">
+  <div class="card"><div class="label">LIVE PRICE · USD</div><div class="metric" id="price">—</div><small id="change">—</small></div>
+  <div class="card"><div class="label">RSI · 14</div><div class="metric" id="rsi">—</div><small id="rsiState">—</small></div>
+  <div class="card"><div class="label">MACD · 12/26/9</div><div class="metric" id="macd">—</div><small id="macdState">—</small></div>
+  <div class="card"><div class="label">ATR · 14</div><div class="metric" id="atr">—</div><small>Average true range</small></div>
+ </div>
+ <div class="layout">
+  <section class="panel">
+   <h3>PRICE HISTORY + FORECAST <span class="pill" id="trend">ANALYSING</span></h3>
+   <canvas id="chart"></canvas>
+   <div class="forecast">
+    <div><small>7-period projection</small><div id="f7">—</div></div>
+    <div><small>30-period projection</small><div id="f30">—</div></div>
+    <div><small>Potential downside</small><div id="downside">—</div></div>
+   </div>
+   <small>Dashed line = illustrative statistical scenario, not a guaranteed prediction.</small>
+  </section>
+  <section class="panel">
+   <h3>MARKET SIGNALS</h3>
+   <div class="signal"><small>EMA 9</small><div class="metric" id="ema9">—</div></div>
+   <div class="signal"><small>EMA 20</small><div class="metric" id="ema20">—</div></div>
+   <div class="signal"><small>EMA 50</small><div class="metric" id="ema50">—</div></div>
+   <div class="signal"><small>BOLLINGER LOWER / UPPER</small><div id="boll">—</div></div>
+   <div class="signal"><small>TECHNICAL INTERPRETATION</small><div id="interpretation">Waiting for data</div></div>
+  </section>
+ </div>
+ <div class="layout">
+  <section class="panel">
+   <h3>RSI + MACD INDICATOR HISTORY</h3>
+   <canvas id="indicators"></canvas>
+  </section>
+  <section class="panel">
+   <h3>FIBONACCI RETRACEMENTS</h3>
+   <div id="fib">Waiting for data</div>
+  </section>
+ </div>
+ <section class="panel" style="margin-top:15px">
+  <h3>TOP 50 BINANCE USDT MARKETS <small> · Ranked by 24h quote volume</small></h3>
+  <div style="overflow-x:auto">
+   <table><thead><tr><th>ASSET</th><th>PRICE</th><th>24H CHANGE</th><th>24H VOLUME</th></tr></thead>
+   <tbody id="markets"><tr><td colspan="4">Loading markets...</td></tr></tbody></table>
+  </div>
+ </section>
+</main>
+<footer>
+ SIGMA 2.0 · Market data supplied by Binance public endpoints. Technical indicators are calculated from historical OHLCV candles. Forecasts are experimental statistical scenarios, not financial advice or reliable knowledge of future prices. API availability and regional restrictions may apply. Never invest based solely on these signals.
+</footer>
+<script>
+const API="https://api.binance.com/api/v3";
+const $=id=>document.getElementById(id);
+let candles=[],marketData=[],selected="BTCUSDT";
+const fmt=n=>Number(n).toLocaleString("en-US",{maximumFractionDigits:6});
+const usd=n=>"$"+fmt(n);
+function ema(a,p){
+ let k=2/(p+1),v=a[0];
+ return a.map((x,i)=>{v=i===0?x:x*k+v*(1-k);return v});
+}
+function rsi(a,p=14){
+ return a.map((x,i)=>{
+  if(i<p)return 50;
+  let up=0,down=0;
+  for(let j=i-p+1;j<=i;j++){
+   let d=a[j]-a[j-1];
+   if(d>0)up+=d;else down-=d;
+  }
+  return down===0?100:100-100/(1+up/down);
+ });
+}
+function macdCalc(a){
+ let x=ema(a,12),y=ema(a,26),line=a.map((_,i)=>x[i]-y[i]);
+ let signal=ema(line,9);
+ return {line,signal,hist:line.map((v,i)=>v-signal[i])};
+}
+function atrCalc(c,p=14){
+ return c.map((v,i)=>{
+  if(i===0)return v.h-v.l;
+  let tr=Math.max(v.h-v.l,Math.abs(v.h-c[i-1].c),Math.abs(v.l-c[i-1].c));
+  let start=Math.max(1,i-p+1),sum=0;
+  for(let j=start;j<=i;j++){
+   const prev=c[j-1];
+   sum+=Math.max(c[j].h-c[j].l,Math.abs(c[j].h-prev.c),Math.abs(c[j].l-prev.c));
+  }
+  return sum/(i-start+1);
+ });
+}
+async function getJSON(url){
+ const r=await fetch(url);
+ if(!r.ok)throw Error("Market API returned "+r.status);
+ return r.json();
+}
+async function loadMarkets(){
+ $("status").textContent="● CONNECTING";
+ const data=await getJSON(API+"/ticker/24hr");
+ marketData=data.filter(x=>x.symbol.endsWith("USDT")&&!x.symbol.includes("UPUSDT")&&!x.symbol.includes("DOWNUSDT")&&!x.symbol.includes("BULLUSDT")&&!x.symbol.includes("BEARUSDT")&&!x.symbol.includes("USDCUSDT")&&!x.symbol.includes("TUSDUSDT")&&!x.symbol.includes("FDUSDUSDT")&&!x.symbol.includes("USDPUSDT")&&!x.symbol.includes("BUSDUSDT"))
+ .sort((a,b)=>Number(b.quoteVolume)-Number(a.quoteVolume)).slice(0,50);
+ $("markets").innerHTML=marketData.map(x=>{
+ let sym=x.symbol.replace("USDT","");
+ return `<tr data-symbol="${x.symbol}"><td>${sym}</td><td>${usd(x.lastPrice)}</td><td class="${Number(x.priceChangePercent)>=0?'positive':'negative'}">${Number(x.priceChangePercent).toFixed(2)}%</td><td>${(Number(x.quoteVolume)/1e6).toFixed(2)}M</td></tr>`;
+ }).join("");
+ document.querySelectorAll("#markets tr[data-symbol]").forEach(row=>row.onclick=()=>{
+  selected=row.dataset.symbol;$("asset").value=selected;loadAsset();
+ });
+ const old=selected;
+ $("asset").innerHTML=marketData.map(x=>`<option value="${x.symbol}">${x.symbol.replace("USDT","")} / USDT</option>`).join("");
+ selected=marketData.some(x=>x.symbol===old)?old:marketData[0].symbol;
+ $("asset").value=selected;
+ $("status").textContent="● MARKET DATA CONNECTED";
+}
+function draw(id,series,forecast=false){
+ const c=$(id),ctx=c.getContext("2d"),dpr=window.devicePixelRatio||1;
+ const w=c.clientWidth,h=c.clientHeight;
+ c.width=w*dpr;c.height=h*dpr;ctx.scale(dpr,dpr);
+ ctx.clearRect(0,0,w,h);
+ if(!series.length)return;
+ const vals=series.map(x=>x.y);
+ let min=Math.min(...vals),max=Math.max(...vals);
+ let pad=(max-min)*.15||1;min-=pad;max+=pad;
+ const left=55,right=12,top=15,bottom=25;
+ const X=i=>left+i/(series.length-1)*(w-left-right);
+ const Y=v=>top+(max-v)/(max-min)*(h-top-bottom);
+ ctx.font="10px Arial";ctx.fillStyle="#91a4bd";
+ for(let i=0;i<5;i++){
+  let y=top+i*(h-top-bottom)/4;
+  ctx.strokeStyle="#24364d";ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right,y);ctx.stroke();
+  ctx.fillText(fmt(max-i*(max-min)/4),3,y+3);
+ }
+ ctx.strokeStyle="#57b8ff";ctx.lineWidth=2;ctx.beginPath();
+ series.forEach((p,i)=>i?ctx.lineTo(X(i),Y(p.y)):ctx.moveTo(X(i),Y(p.y)));
+ ctx.stroke();
+ if(forecast){
+  let start=series.findIndex(p=>p.forecast);
+  if(start>0){
+   ctx.strokeStyle="#e8c66b";ctx.setLineDash([5,4]);ctx.lineWidth=2;
+   ctx.beginPath();for(let i=start;i<series.length;i++)i===start?ctx.moveTo(X(i),Y(series[i].y)):ctx.lineTo(X(i),Y(series[i].y));ctx.stroke();ctx.setLineDash([]);
+  }
+ }
+}
+function render(){
+ const close=candles.map(x=>x.c),last=close.length-1;
+ if(last<30)throw Error("Insufficient historical candles");
+ const e9=ema(close,9),e20=ema(close,20),e50=ema(close,50);
+ const rr=rsi(close),m=macdCalc(close),at=atrCalc(candles);
+ const price=close[last],change=(price/close[last-1]-1)*100;
+ const slice=close.slice(-20),mean=slice.reduce((a,b)=>a+b,0)/20;
+ const sd=Math.sqrt(slice.reduce((a,b)=>a+(b-mean)**2,0)/20);
+ const upper=mean+2*sd,lower=mean-2*sd;
+ $("price").textContent=usd(price);
+ $("change").textContent=(change>=0?"+":"")+change.toFixed(2)+"% last candle";
+ $("change").className=change>=0?"positive":"negative";
+ $("rsi").textContent=rr[last].toFixed(2);
+ $("rsiState").textContent=rr[last]<30?"Oversold":rr[last]>70?"Overbought":"Neutral";
+ $("macd").textContent=fmt(m.line[last]);
+ $("macdState").textContent=m.hist[last]>=0?"Above signal line":"Below signal line";
+ $("atr").textContent=usd(at[last]);
+ $("ema9").textContent=usd(e9[last]);$("ema20").textContent=usd(e20[last]);$("ema50").textContent=usd(e50[last]);
+ $("boll").textContent=usd(lower)+" / "+usd(upper);
+ const bullish=e9[last]>e20[last]&&e20[last]>e50[last];
+ const bearish=e9[last]<e20[last]&&e20[last]<e50[last];
+ $("trend").textContent=bullish?"BULLISH":bearish?"BEARISH":"MIXED";
+ $("interpretation").textContent=(bullish?"Uptrend":bearish?"Downtrend":"Mixed trend")+" · RSI "+$("rsiState").textContent+" · MACD "+$("macdState").textContent;
+ const high=Math.max(...candles.slice(-60).map(x=>x.h)),low=Math.min(...candles.slice(-60).map(x=>x.l));
+ const fib=[0,.236,.382,.5,.618,.786,1];
+ $("fib").innerHTML=fib.map(f=>`<div style="display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid #24364d"><span>${(f*100).toFixed(1)}%</span><b>${usd(high-(high-low)*f)}</b></div>`).join("");
+ const horizon=30,drift=Math.max(-.02,Math.min(.02,(e20[last]/e50[last]-1)*.08+(rr[last]-50)*.0002));
+ const projected=price*Math.pow(1+drift,horizon);
+ $("f7").textContent=usd(price*Math.pow(1+drift,7));
+ $("f30").textContent=usd(projected);
+ $("downside").textContent=usd(Math.max(0,projected-2*at[last]*Math.sqrt(horizon)));
+ let series=close.slice(-100).map((y,i)=>({y}));
+ let forecastSeries=Array.from({length:31},(_,i)=>({y:price*Math.pow(1+drift,i),forecast:i>0}));
+ draw("chart",series.concat(forecastSeries),true);
+ const rdata=rr.slice(-60).map(y=>({y}));
+ draw("indicators",rdata);
+ $("updated").textContent="Updated "+new Date().toLocaleTimeString();
+}
+async function loadAsset(){
+ try{
+  $("status").textContent="● LOADING "+selected;
+  const interval=$("interval").value;
+  const raw=await getJSON(API+"/klines?symbol="+selected+"&interval="+interval+"&limit=200");
+  candles=raw.map(x=>({t:x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}));
+  render();$("status").textContent="● LIVE DATA CONNECTED";
+ }catch(e){$("status").textContent="● ERROR: "+e.message}
+}
+$("asset").onchange=e=>{selected=e.target.value;loadAsset()};
+$("interval").onchange=loadAsset;
+$("refresh").onclick=async()=>{try{await loadMarkets();await loadAsset()}catch(e){$("status").textContent="● "+e.message}};
+async function start(){
+ try{await loadMarkets();await loadAsset();setInterval(async()=>{try{await loadMarkets();await loadAsset()}catch(e){console.warn(e)}},60000)}
+ catch(e){$("status").textContent="● CONNECTION ERROR: "+e.message}
+}
+window.addEventListener("resize",()=>{if(candles.length)render()});
+start();
+</script>
+</body>
+</html>
